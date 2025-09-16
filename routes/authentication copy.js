@@ -1,7 +1,6 @@
 const User = require('../models/user'); // Import User Model Schema
 const jwt = require('jsonwebtoken'); // Compact, URL-safe means of representing claims
 const config = require('../config/database'); // Import database configuration
-const checkAuth = require('../middleware/auth');
 
 module.exports = (router) => {
     /* ==============
@@ -117,8 +116,8 @@ module.exports = (router) => {
         }
     });
 
-    /* ===============================================================
-       Public Profile (no token required)
+     /* ===============================================================
+       Public Profile
     =============================================================== */
     router.get('/publicProfile/:username', async (req, res) => {
         try {
@@ -136,9 +135,9 @@ module.exports = (router) => {
     });
 
     /* ================================================
-       Middleware - check JWT (applies to private routes only)
+       Middleware - check JWT
     ================================================ */
-    const checkAuth = (req, res, next) => {
+    router.use((req, res, next) => {
         const token = req.headers['authorization'];
         if (!token) {
             return res.json({ success: false, user: null, message: 'No token provided' });
@@ -150,22 +149,24 @@ module.exports = (router) => {
             req.decoded = decoded;
             next();
         });
-    };
+    });
 
     /* ===============================================================
-       Profile (requires token)
+       Profile
     =============================================================== */
-    router.get('/profile', checkAuth, async (req, res) => {
-  try {
-    const user = await User.findOne({ _id: req.decoded.userId }).select('username email');
-    if (!user) {
-      return res.json({ success: false, user: null, message: 'User not found' });
-    }
-    return res.json({ success: true, user });
-  } catch (err) {
-    return res.json({ success: false, user: null, message: err.message });
-  }
-});
+    router.get('/profile', async (req, res) => {
+        try {
+            const user = await User.findOne({ _id: req.decoded.userId }).select('username email');
+            if (!user) {
+                return res.json({ success: false, user: null, message: 'User not found' });
+            }
+            return res.json({ success: true, user });
+        } catch (err) {
+            return res.json({ success: false, user: null, message: err.message });
+        }
+    });
+
+   
 
     return router;
 };

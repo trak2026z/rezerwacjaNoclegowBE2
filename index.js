@@ -11,16 +11,9 @@ const bodyParser = require('body-parser'); // Parse incoming request bodies in a
 const cors = require('cors'); // CORS is a node.js package for providing a Connect/Express middleware that can be used to enable CORS with various options.
 const port = process.env.PORT || 3000;
 // Database Connection
-mongoose.connect(config.uri, {
-    useMongoClient: true,
-}, (err) => {
-    // Check if database was able to connect
-    if (err) {
-        console.log('Could NOT connect to database: ', err); // Return error message
-    } else {
-        console.log('Connected to ' + config.db); // Return success message
-    }
-});
+mongoose.connect(config.uri, { })
+  .then(() => console.log('Connected to ' + config.db))
+  .catch(err => console.error('Could NOT connect to database: ', err));
 
 // Middleware
 app.use(cors({ origin: 'http://localhost:4200' }));
@@ -30,10 +23,15 @@ app.use(express.static(__dirname + '/public')); // Provide static directory for 
 app.use('/authentication', authentication); // Use Authentication routes in application
 app.use('/rooms', rooms); // Use Room routes in application
 
+app.get("/health", (req,res) => res.json({status:"okOKok"}));
+
 // Connect server to Angular 2 Index.html
-app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname + '/public/index.html'));
+app.get(/.*/, (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
+
+
+
 
 // Start Server: Listen on port 3000
 app.listen(port, () => {

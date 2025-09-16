@@ -1,10 +1,12 @@
-const User = require('../models/user');
-const Room = require('../models/room');
+const User = require('../models/user'); // Import User Model Schema
+const Room = require('../models/room'); // Import Room Model Schema
+
 const checkAuth = require('../middleware/auth');
+
 
 module.exports = (router) => {
     /* ===============================================================
-       CREATE NEW ROOM (public)
+       CREATE NEW ROOM
     =============================================================== */
     router.post('/newRoom', async (req, res) => {
         try {
@@ -38,7 +40,7 @@ module.exports = (router) => {
     });
 
     /* ===============================================================
-       GET ALL ROOMS (public)
+       GET ALL ROOMS
     =============================================================== */
     router.get('/allRooms', async (req, res) => {
         try {
@@ -53,7 +55,7 @@ module.exports = (router) => {
     });
 
     /* ===============================================================
-       GET SINGLE ROOM (public)
+       GET SINGLE ROOM
     =============================================================== */
     router.get('/singleRoom/:id', async (req, res) => {
         try {
@@ -66,6 +68,15 @@ module.exports = (router) => {
                 return res.json({ success: false, user: null, message: 'Room not found.' });
             }
 
+            const user = await User.findById(req.decoded.userId);
+            if (!user) {
+                return res.json({ success: false, user: null, message: 'Unable to authenticate user' });
+            }
+
+            if (user.username !== room.createdBy) {
+                return res.json({ success: false, user: null, message: 'You are not authorized to edit this room.' });
+            }
+
             return res.json({ success: true, room });
         } catch (err) {
             return res.json({ success: false, user: null, message: err.message });
@@ -73,9 +84,9 @@ module.exports = (router) => {
     });
 
     /* ===============================================================
-       UPDATE ROOM (requires auth)
+       UPDATE ROOM
     =============================================================== */
-    router.put('/updateRoom', checkAuth, async (req, res) => {
+    router.put('/updateRoom', async (req, res) => {
         try {
             if (!req.body._id) {
                 return res.json({ success: false, user: null, message: 'No room id provided' });
@@ -97,9 +108,11 @@ module.exports = (router) => {
 
             room.title = req.body.title;
             room.body = req.body.body;
-            room.city = req.body.city;
+            room.createdBy = req.body.createdBy;
+            room.createdAt = req.body.createdAt;
             room.startAt = req.body.startAt;
             room.endsAt = req.body.endsAt;
+            room.city = req.body.city;
 
             await room.save();
             return res.json({ success: true, message: 'Room updated!' });
@@ -109,17 +122,25 @@ module.exports = (router) => {
     });
 
     /* ===============================================================
-       DELETE ROOM (requires auth)
+       DELETE ROOM
     =============================================================== */
-    router.delete('/deleteRoom/:id', checkAuth, async (req, res) => {
+    router.delete('/deleteRoom/:id', async (req, res) => {
         try {
+            if (!req.params.id) {
+                return res.json({ success: false, user: null, message: 'No id provided' });
+            }
+
             const room = await Room.findById(req.params.id);
             if (!room) {
                 return res.json({ success: false, user: null, message: 'Room not found' });
             }
 
             const user = await User.findById(req.decoded.userId);
-            if (!user || user.username !== room.createdBy) {
+            if (!user) {
+                return res.json({ success: false, user: null, message: 'Unable to authenticate user.' });
+            }
+
+            if (user.username !== room.createdBy) {
                 return res.json({ success: false, user: null, message: 'You are not authorized to delete this room' });
             }
 
@@ -131,10 +152,14 @@ module.exports = (router) => {
     });
 
     /* ===============================================================
-       LIKE ROOM (requires auth)
+       LIKE ROOM
     =============================================================== */
-    router.put('/likeRoom', checkAuth, async (req, res) => {
+    router.put('/likeRoom', async (req, res) => {
         try {
+            if (!req.body.id) {
+                return res.json({ success: false, user: null, message: 'No id was provided.' });
+            }
+
             const room = await Room.findById(req.body.id);
             if (!room) {
                 return res.json({ success: false, user: null, message: 'Room not found.' });
@@ -169,10 +194,14 @@ module.exports = (router) => {
     });
 
     /* ===============================================================
-       DISLIKE ROOM (requires auth)
+       DISLIKE ROOM
     =============================================================== */
-    router.put('/dislikeRoom', checkAuth, async (req, res) => {
+    router.put('/dislikeRoom', async (req, res) => {
         try {
+            if (!req.body.id) {
+                return res.json({ success: false, user: null, message: 'No id was provided.' });
+            }
+
             const room = await Room.findById(req.body.id);
             if (!room) {
                 return res.json({ success: false, user: null, message: 'Room not found.' });
@@ -207,10 +236,14 @@ module.exports = (router) => {
     });
 
     /* ===============================================================
-       RESERVE ROOM (requires auth)
+       RESERVE ROOM
     =============================================================== */
-    router.put('/reserve', checkAuth, async (req, res) => {
+    router.put('/reserve', async (req, res) => {
         try {
+            if (!req.body.id) {
+                return res.json({ success: false, user: null, message: 'No id was provided.' });
+            }
+
             const room = await Room.findById(req.body.id);
             if (!room) {
                 return res.json({ success: false, user: null, message: 'Room not found.' });
@@ -227,6 +260,10 @@ module.exports = (router) => {
 
             if (room.reserve === true) {
                 return res.json({ success: false, user: null, message: 'Someone else reserved this room.' });
+            }
+
+            if (room.reservedBy && room.reservedBy === user.username) {
+                return res.json({ success: false, user: null, message: 'You already reserved this room.' });
             }
 
             room.reservedBy = user.username;

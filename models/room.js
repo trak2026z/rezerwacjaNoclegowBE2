@@ -106,7 +106,7 @@ const roomSchema = new Schema({
     startAt: {type: Date, default: Date.now()},// startAt field
     endsAt: {type: Date, default: Date.now()},// endsAt field
     city: {type: String}, // city field
-    imgLink:{type: String, default: 'http://www.langhamhotels.com/cdn-4fdfa8bc/globalassets/lhr/tl-london/rooms/superior-room/tllon-rooms-superiorroom-1680-945.jpg'}
+    imgLink:{type: String, default: 'https://picsum.photos/800/600'}
 });
 
 // Export Module/Schema
