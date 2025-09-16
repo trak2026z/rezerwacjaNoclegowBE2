@@ -1,0 +1,23 @@
+{
+  "name": "Rezerwacja",
+  "version": "1.0.0",
+  "description": "Rezerwacja Noclegow",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index",
+    "build": "cd Rezerwacja-src && ng build --prod"
+  },
+  "dependencies": {
+    "body-parser": "*",
+    "cors": "*",
+    "express": "*",
+    "jsonwebtoken": "*",
+    "mongoose": "*",
+    "passport": "*",
+    "passport-jwt": "*",
+    "bcrypt-nodejs":"*"
+  },
+  "author": "Lukasz Chciuk",
+  "license": "ISC"
+}
