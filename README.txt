@@ -22,3 +22,5 @@ ng serve
 
 docker-compose -f docker-compose.dev.yml down -v
 docker-compose -f docker-compose.dev.yml up --build
+
+docker logs -f rezerwacja_api_dev

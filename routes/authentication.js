@@ -1,14 +1,16 @@
 const express = require('express');
-const checkAuth = require('../middleware/auth');
+const auth = require('../middleware/auth'); // ✅ ujednolicona nazwa
 const authController = require('../controllers/authController');
+const { validateRegister, validateLogin } = require('../middleware/validateAuthData'); // ✅ dodana walidacja
 
 const router = express.Router();
 
-router.post('/register', authController.register);
+// ✅ dodana walidacja przy rejestracji i logowaniu
+router.post('/register', validateRegister, authController.register);
 router.get('/checkEmail/:email', authController.checkEmail);
 router.get('/checkUsername/:username', authController.checkUsername);
-router.post('/login', authController.login);
+router.post('/login', validateLogin, authController.login);
 router.get('/publicProfile/:username', authController.publicProfile);
-router.get('/profile', checkAuth, authController.profile);
+router.get('/profile', auth, authController.profile);
 
 module.exports = router;

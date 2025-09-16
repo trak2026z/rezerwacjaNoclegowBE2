@@ -6,11 +6,16 @@ const cors = require('cors');
 const config = require('./config');
 const authentication = require('./routes/authentication');
 const rooms = require('./routes/rooms');
+const errorHandler = require('./middleware/errorHandler'); // ✅ używamy dedykowanego middleware
 
 const app = express();
 
 // Database Connection
-mongoose.connect(config.mongoUri, { useNewUrlParser: true, useUnifiedTopology: true })
+mongoose
+  .connect(config.mongoUri, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
   .then(() => {
     console.log(`✅ Connected to MongoDB at: ${config.mongoUri}`);
   })
@@ -32,10 +37,7 @@ app.use('/rooms', rooms);
 // Health check
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
 
-// Global error handler (na wszelki wypadek)
-app.use((err, req, res, next) => {
-  console.error('🔥 Unhandled error:', err);
-  res.status(500).json({ success: false, message: 'Internal Server Error' });
-});
+// Global error handler (ostatni w stacku)
+app.use(errorHandler);
 
 module.exports = app;

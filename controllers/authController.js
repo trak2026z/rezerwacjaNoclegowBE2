@@ -103,7 +103,7 @@ exports.publicProfile = async (req, res) => {
 
 exports.profile = async (req, res) => {
   try {
-    const user = await User.findById(req.decoded.userId).select('username email');
+    const user = await User.findById(req.user.userId).select('username email');
     if (!user) {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
@@ -112,3 +112,4 @@ exports.profile = async (req, res) => {
     return res.status(500).json({ success: false, message: err.message });
   }
 };
+
