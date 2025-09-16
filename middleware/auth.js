@@ -1,14 +1,16 @@
 const jwt = require('jsonwebtoken');
-const config = require('../config/database');
+const config = require('../config'); // ✅ zamiast '../config/database'
 
 module.exports = (req, res, next) => {
   const token = req.headers['authorization'];
+
   if (!token) {
-    return res.json({ success: false, user: null, message: 'No token provided' });
+    return res.status(401).json({ success: false, message: 'No token provided' });
   }
-  jwt.verify(token, config.secret, (err, decoded) => {
+
+  jwt.verify(token, config.jwtSecret, (err, decoded) => { // ✅
     if (err) {
-      return res.json({ success: false, user: null, message: 'Token invalid: ' + err });
+      return res.status(401).json({ success: false, message: 'Token invalid', error: err.message });
     }
     req.decoded = decoded;
     next();
