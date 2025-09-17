@@ -4,7 +4,7 @@
   "description": "Backend API do rezerwacji noclegów (Express + Mongoose + JWT)",
   "main": "server.js",
   "scripts": {
-    "dev": "nodemon server.js",
+    "dev": "nodemon src/server.js",
     "start": "node server.js",
     "lint": "eslint .",
     "test": "jest --runInBand",
