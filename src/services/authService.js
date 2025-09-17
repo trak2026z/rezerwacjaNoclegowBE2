@@ -1,9 +1,8 @@
 // src/services/authService.js
 const jwt = require("jsonwebtoken");
-const User = require("../models/User");
+const userRepository = require("../repositories/userRepository");
 const config = require("../config");
 const {
-  BadRequestError,
   NotFoundError,
   ConflictError,
   UnauthorizedError,
@@ -20,25 +19,21 @@ function generateToken(userId) {
  * Register new user
  */
 async function registerUser({ email, username, password }) {
-  const emailTaken = await User.findOne({ email: email.toLowerCase() });
+  const emailTaken = await userRepository.findByEmail(email);
   if (emailTaken) {
     throw new ConflictError("Email is already taken.");
   }
 
-  const usernameTaken = await User.findOne({
-    username: username.toLowerCase(),
-  });
+  const usernameTaken = await userRepository.findByUsername(username);
   if (usernameTaken) {
     throw new ConflictError("Username is already taken.");
   }
 
-  const user = new User({
+  const user = await userRepository.createUser({
     email: email.toLowerCase(),
     username: username.toLowerCase(),
     password,
   });
-
-  await user.save();
 
   const token = generateToken(user._id);
 
@@ -52,7 +47,7 @@ async function registerUser({ email, username, password }) {
  * Login user
  */
 async function loginUser(username, password) {
-  const user = await User.findOne({ username: username.toLowerCase() });
+  const user = await userRepository.findByUsername(username);
   if (!user) {
     throw new NotFoundError("User not found.");
   }
@@ -74,38 +69,36 @@ async function loginUser(username, password) {
  * Check if email exists
  */
 async function isEmailTaken(email) {
-  const user = await User.findOne({ email });
-  return !!user;
+  return !!(await userRepository.findByEmail(email));
 }
 
 /**
  * Check if username exists
  */
 async function isUsernameTaken(username) {
-  const user = await User.findOne({ username });
-  return !!user;
+  return !!(await userRepository.findByUsername(username));
 }
 
 /**
  * Get public profile by username
  */
 async function getPublicProfile(username) {
-  const user = await User.findOne({ username }).select("username email");
+  const user = await userRepository.findByUsername(username);
   if (!user) {
     throw new NotFoundError("User not found.");
   }
-  return user;
+  return { username: user.username, email: user.email };
 }
 
 /**
  * Get profile by ID
  */
 async function getProfileById(userId) {
-  const user = await User.findById(userId).select("username email");
+  const user = await userRepository.findById(userId);
   if (!user) {
     throw new NotFoundError("User not found.");
   }
-  return user;
+  return { username: user.username, email: user.email };
 }
 
 module.exports = {

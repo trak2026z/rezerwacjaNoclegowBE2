@@ -1,28 +1,23 @@
 // src/services/roomService.js
-const Room = require("../models/Room");
+const roomRepository = require("../repositories/roomRepository");
 const { BadRequestError, ConflictError, NotFoundError } = require("../utils/errors");
 
 /**
  * Create a new room
  */
 async function createRoom(data, userId) {
-  const { title, body, startAt, endsAt, city } = data;
+  const { title, city } = data;
 
   if (!title || !city) {
     throw new BadRequestError("Title and city are required.");
   }
 
-  const room = new Room({
-    title,
-    body,
+  const room = await roomRepository.createRoom({
+    ...data,
     createdBy: userId,
     createdAt: Date.now(),
-    startAt,
-    endsAt,
-    city,
   });
 
-  await room.save();
   return room;
 }
 
@@ -30,24 +25,17 @@ async function createRoom(data, userId) {
  * Get all rooms (with user info populated)
  */
 async function getAllRooms() {
-  return Room.find({})
-    .populate("createdBy", "username email")
-    .populate("reservedBy", "username email")
-    .sort({ _id: -1 });
+  return roomRepository.findAllRooms();
 }
 
 /**
  * Get a room by ID
  */
 async function getRoomById(id) {
-  const room = await Room.findById(id)
-    .populate("createdBy", "username email")
-    .populate("reservedBy", "username email");
-
+  const room = await roomRepository.findRoomById(id);
   if (!room) {
     throw new NotFoundError("Room not found.");
   }
-
   return room;
 }
 
@@ -58,10 +46,7 @@ async function updateRoom(room, data) {
   if (!room) {
     throw new NotFoundError("Room not found.");
   }
-
-  Object.assign(room, data);
-  await room.save();
-  return room;
+  return roomRepository.updateRoom(room, data);
 }
 
 /**
@@ -71,8 +56,7 @@ async function deleteRoom(room) {
   if (!room) {
     throw new NotFoundError("Room not found.");
   }
-
-  await Room.deleteOne({ _id: room._id });
+  return roomRepository.deleteRoom(room);
 }
 
 /**
@@ -110,8 +94,7 @@ async function handleReaction(room, userId, type) {
     }
   }
 
-  await room.save();
-  return room;
+  return roomRepository.save(room);
 }
 
 /**
@@ -132,8 +115,7 @@ async function reserveRoom(room, userId) {
   room.reservedBy = userId;
   room.reserve = true;
 
-  await room.save();
-  return room;
+  return roomRepository.save(room);
 }
 
 module.exports = {
