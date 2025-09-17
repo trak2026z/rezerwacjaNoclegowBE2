@@ -1,0 +1,23 @@
+# Node modules (hostowe, zainstalowane lokalnie)
+node_modules
+
+# Logs
+*.log
+
+# Env files (sekrety wstrzykujemy przez docker-compose)
+.env
+.env.local
+
+# Git
+.git
+.gitignore
+
+# Tests
+coverage
+__tests__/
+jest-test-results.json
+
+# IDE / system files
+.vscode
+.idea
+.DS_Store

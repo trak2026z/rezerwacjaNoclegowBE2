@@ -6,29 +6,22 @@
   "scripts": {
     "dev": "nodemon server.js",
     "start": "node server.js",
-    "typecheck": "tsc --noEmit || echo 'no TS config' && exit 0",
     "lint": "eslint .",
     "test": "jest --runInBand",
     "build": "echo 'No build step required for Express backend'"
   },
   "dependencies": {
+    "bcrypt": "^5.1.1",
     "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "jsonwebtoken": "^9.0.2",
-    "mongoose": "^7.6.3",
-    "passport": "^0.7.0",
-    "passport-jwt": "^4.0.1",
-    "bcrypt": "^5.1.1"
+    "mongoose": "^7.6.3"
   },
   "devDependencies": {
-    "nodemon": "^3.1.0",
     "eslint": "^9.9.0",
     "jest": "^29.7.0",
-    "@types/express": "^4.17.21",
-    "@types/jest": "^29.5.12",
-    "@types/jsonwebtoken": "^9.0.6",
-    "@types/mongoose": "^5.11.97",
-    "@types/passport-jwt": "^3.0.9"
+    "nodemon": "^3.1.0"
   },
   "author": "developer",
   "license": "ISC"
