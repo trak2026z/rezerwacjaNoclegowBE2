@@ -7,12 +7,12 @@ const config = {
   env: process.env.NODE_ENV || 'development',
   port: process.env.PORT || 5000,
 
-  // ⚠️ Fallback JWT_SECRET tylko w development
+  // ⚠️ fallback tylko w development
   jwtSecret:
     process.env.JWT_SECRET ||
     (process.env.NODE_ENV !== 'production' ? 'fallback_secret' : undefined),
 
-  // ⚠️ Fallback tylko lokalnie
+  // ⚠️ fallback tylko w development
   mongoUri:
     process.env.MONGO_URI ||
     (process.env.NODE_ENV !== 'production'
@@ -22,7 +22,7 @@ const config = {
   corsOrigin: process.env.CORS_ORIGIN || '*',
 };
 
-// 🔒 W produkcji wymagamy podania JWT_SECRET i MONGO_URI
+// 🔒 W produkcji wymagamy podania krytycznych zmiennych
 if (config.env === 'production') {
   if (!config.jwtSecret) {
     throw new Error('❌ Missing required environment variable: JWT_SECRET');
@@ -32,7 +32,7 @@ if (config.env === 'production') {
   }
 }
 
-// 🐛 Loguj konfigurację tylko w trybie development (bez sekretnych wartości!)
+// 🐛 W development logujemy konfigurację (bez sekretnych danych)
 if (config.env === 'development') {
   console.log('✅ Loaded configuration:', {
     port: config.port,

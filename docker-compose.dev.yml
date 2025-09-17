@@ -10,7 +10,9 @@ services:
       - "3000:3000"
     environment:
       - NODE_ENV=development
-      - MONGO_URI=mongodb://db:27017/rezerwacja
+      - MONGO_URI=mongodb://db:27017/rezerwacje   # ✅ dopasowane do .env (nazwa DB = rezerwacje)
+      - JWT_SECRET=super_secret_jwt_key           # ✅ jawnie podajemy, jak w .env
+      - PORT=3000                                 # ✅ spójne z .env
     volumes:
       - .:/app
       - /app/node_modules   # chroni node_modules w kontenerze

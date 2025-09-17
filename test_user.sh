@@ -36,7 +36,7 @@ echo
 
 echo "=== 6. Get profile (requires token) ==="
 curl -s -X GET $API/authentication/profile \
-  -H "Authorization: $TOKEN" | jq .
+  -H "Authorization: Bearer $TOKEN" | jq .
 echo
 
 echo "=== 7. Get public profile (by username) ==="

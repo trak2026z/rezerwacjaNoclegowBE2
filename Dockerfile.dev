@@ -6,15 +6,19 @@ WORKDIR /app
 ENV NODE_ENV=development \
     NODE_OPTIONS=--enable-source-maps
 
-# Kopiujemy package.json i package-lock.json
+# Kopiujemy manifesty zależności
 COPY package*.json ./
 
-# Instalujemy zależności (w tym nodemon z devDependencies)
+# Instalacja zależności (w tym devDependencies)
 RUN npm install
 
-# Kopiujemy cały kod
+# Kopiujemy kod aplikacji
 COPY . .
 
+# Uruchamiamy na porcie 3000 (zgodnym z .env)
 EXPOSE 3000
+
+# Użyj użytkownika node (bez root)
+USER node
 
 CMD ["npm", "run", "dev"]

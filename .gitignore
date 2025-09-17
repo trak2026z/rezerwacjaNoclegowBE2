@@ -1,3 +1,30 @@
+# Node modules
+node_modules/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.log
+
+# Coverage and test output
+coverage/
+jest-test-results.json
+
+# Build outputs
+dist/
+build/
+
+# Public bundles (twoje obecne wpisy)
 public/
 public/*.bundle.js
 public/*.bundle.map
+
+# Docker
+docker-data/
