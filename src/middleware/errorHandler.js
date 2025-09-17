@@ -2,14 +2,21 @@
 const { AppError } = require("../utils/errors");
 
 function errorHandler(err, req, res, next) {
-  console.error("❌ Error:", err);
+  // Logowanie do serwera (konsola / monitoring)
+  console.error(`❌ Error [${err.name}]`, {
+    message: err.message,
+    stack: err.stack,
+    statusCode: err.statusCode || 500,
+    path: req.originalUrl,
+    method: req.method,
+  });
 
   // Jeśli odpowiedź już została wysłana, przekaż dalej
   if (res.headersSent) {
     return next(err);
   }
 
-  // Obsługa własnych błędów aplikacyjnych (AppError i pochodne)
+  // Obsługa błędów aplikacyjnych (AppError i pochodne)
   if (err instanceof AppError) {
     return res.status(err.statusCode).json({
       success: false,
@@ -38,7 +45,7 @@ function errorHandler(err, req, res, next) {
   // Fallback – Internal Server Error
   return res.status(500).json({
     success: false,
-    message: err.message || "Internal Server Error",
+    message: "Internal Server Error",
   });
 }
 

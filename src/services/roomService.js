@@ -1,11 +1,16 @@
+// src/services/roomService.js
 const Room = require("../models/Room");
-const { BadRequestError, ConflictError } = require("../utils/errors");
+const { BadRequestError, ConflictError, NotFoundError } = require("../utils/errors");
 
 /**
  * Create a new room
  */
 async function createRoom(data, userId) {
   const { title, body, startAt, endsAt, city } = data;
+
+  if (!title || !city) {
+    throw new BadRequestError("Title and city are required.");
+  }
 
   const room = new Room({
     title,
@@ -35,15 +40,25 @@ async function getAllRooms() {
  * Get a room by ID
  */
 async function getRoomById(id) {
-  return Room.findById(id)
+  const room = await Room.findById(id)
     .populate("createdBy", "username email")
     .populate("reservedBy", "username email");
+
+  if (!room) {
+    throw new NotFoundError("Room not found.");
+  }
+
+  return room;
 }
 
 /**
  * Update room with new data
  */
 async function updateRoom(room, data) {
+  if (!room) {
+    throw new NotFoundError("Room not found.");
+  }
+
   Object.assign(room, data);
   await room.save();
   return room;
@@ -53,6 +68,10 @@ async function updateRoom(room, data) {
  * Delete room
  */
 async function deleteRoom(room) {
+  if (!room) {
+    throw new NotFoundError("Room not found.");
+  }
+
   await Room.deleteOne({ _id: room._id });
 }
 
@@ -60,6 +79,10 @@ async function deleteRoom(room) {
  * Handle like/dislike logic
  */
 async function handleReaction(room, userId, type) {
+  if (!room) {
+    throw new NotFoundError("Room not found.");
+  }
+
   const liked = room.likedBy.includes(userId);
   const disliked = room.dislikedBy.includes(userId);
 
@@ -95,6 +118,10 @@ async function handleReaction(room, userId, type) {
  * Reserve room
  */
 async function reserveRoom(room, userId) {
+  if (!room) {
+    throw new NotFoundError("Room not found.");
+  }
+
   if (String(room.createdBy) === userId) {
     throw new BadRequestError("Cannot reserve your own room.");
   }

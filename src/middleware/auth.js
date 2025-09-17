@@ -1,33 +1,29 @@
-const jwt = require('jsonwebtoken');
-const config = require('../config');
+// src/middleware/auth.js
+const jwt = require("jsonwebtoken");
+const config = require("../config");
+const { UnauthorizedError } = require("../utils/errors");
 
 function authMiddleware(req, res, next) {
-  const authHeader = req.headers['authorization'];
+  const authHeader = req.headers["authorization"];
   if (!authHeader) {
-    return res
-      .status(401)
-      .json({ success: false, message: 'Authorization header missing' });
+    throw new UnauthorizedError("Authorization header missing");
   }
 
   // Expect "Bearer <token>"
-  const parts = authHeader.split(' ');
-  if (parts.length !== 2 || parts[0] !== 'Bearer') {
-    return res
-      .status(401)
-      .json({ success: false, message: 'Invalid authorization format' });
+  const parts = authHeader.split(" ");
+  if (parts.length !== 2 || parts[0] !== "Bearer") {
+    throw new UnauthorizedError("Invalid authorization format");
   }
+
   const token = parts[1];
 
-  jwt.verify(token, config.jwtSecret, (err, decoded) => {
-    if (err) {
-      // nie zwracamy szczegółów błędu atakującemu
-      return res
-        .status(403)
-        .json({ success: false, message: 'Invalid or expired token' });
-    }
+  try {
+    const decoded = jwt.verify(token, config.jwtSecret);
     req.user = decoded; // zamiast req.decoded
-    return next();
-  });
+    next();
+  } catch (err) {
+    throw new UnauthorizedError("Invalid or expired token");
+  }
 }
 
 module.exports = authMiddleware;

@@ -1,108 +1,55 @@
-const jwt = require('jsonwebtoken');
-const User = require('../models/User');
-const config = require('../config');
-const asyncHandler = require('../utils/asyncHandler');
+// src/controllers/authController.js
+const asyncHandler = require("../utils/asyncHandler");
+const authService = require("../services/authService");
 
-// ✅ helper do generowania JWT
-function generateToken(userId) {
-  return jwt.sign({ userId }, config.jwtSecret, { expiresIn: '24h' });
-}
+// === Kontrolery ===
 
 exports.register = asyncHandler(async (req, res) => {
   const { email, username, password } = req.body;
-
-  const user = new User({
-    email: email.toLowerCase(),
-    username: username.toLowerCase(),
-    password,
-  });
-
-  try {
-    await user.save();
-  } catch (err) {
-    if (err.code === 11000) {
-      return res
-        .status(409)
-        .json({ success: false, message: 'Username or e-mail already exists' });
-    }
-    throw err; // złapie globalny error handler
-  }
-
-  const token = generateToken(user._id);
+  const { user, token } = await authService.registerUser({ email, username, password });
 
   return res.status(201).json({
     success: true,
-    message: 'Account registered!',
+    message: "Account registered!",
     token,
-    user: { _id: user._id, username: user.username, email: user.email },
+    user,
   });
-});
-
-exports.checkEmail = asyncHandler(async (req, res) => {
-  const user = await User.findOne({ email: req.params.email });
-  if (user) {
-    return res
-      .status(409)
-      .json({ success: false, message: 'E-mail is already taken' });
-  }
-  return res.json({ success: true, message: 'E-mail is available' });
-});
-
-exports.checkUsername = asyncHandler(async (req, res) => {
-  const user = await User.findOne({ username: req.params.username });
-  if (user) {
-    return res
-      .status(409)
-      .json({ success: false, message: 'Username is already taken' });
-  }
-  return res.json({ success: true, message: 'Username is available' });
 });
 
 exports.login = asyncHandler(async (req, res) => {
   const { username, password } = req.body;
-
-  const user = await User.findOne({ username: username.toLowerCase() });
-  if (!user) {
-    return res
-      .status(404)
-      .json({ success: false, message: 'Username not found' });
-  }
-
-  const validPassword = await user.comparePassword(password);
-  if (!validPassword) {
-    return res
-      .status(401)
-      .json({ success: false, message: 'Password invalid' });
-  }
-
-  const token = generateToken(user._id);
+  const { user, token } = await authService.loginUser(username, password);
 
   return res.json({
     success: true,
-    message: 'Login successful!',
+    message: "Login successful!",
     token,
-    user: { _id: user._id, username: user.username, email: user.email },
+    user,
   });
 });
 
-exports.publicProfile = asyncHandler(async (req, res) => {
-  const user = await User.findOne({ username: req.params.username }).select(
-    'username email'
-  );
-  if (!user) {
-    return res
-      .status(404)
-      .json({ success: false, message: 'Username not found.' });
+exports.checkEmail = asyncHandler(async (req, res) => {
+  const taken = await authService.isEmailTaken(req.params.email);
+  if (taken) {
+    return res.status(409).json({ success: false, message: "E-mail is already taken" });
   }
+  return res.json({ success: true, message: "E-mail is available" });
+});
+
+exports.checkUsername = asyncHandler(async (req, res) => {
+  const taken = await authService.isUsernameTaken(req.params.username);
+  if (taken) {
+    return res.status(409).json({ success: false, message: "Username is already taken" });
+  }
+  return res.json({ success: true, message: "Username is available" });
+});
+
+exports.publicProfile = asyncHandler(async (req, res) => {
+  const user = await authService.getPublicProfile(req.params.username);
   return res.json({ success: true, user });
 });
 
 exports.profile = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.user.userId).select('username email');
-  if (!user) {
-    return res
-      .status(404)
-      .json({ success: false, message: 'User not found' });
-  }
+  const user = await authService.getProfileById(req.user.userId);
   return res.json({ success: true, user });
 });

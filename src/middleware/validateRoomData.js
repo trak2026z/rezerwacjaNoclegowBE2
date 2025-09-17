@@ -1,12 +1,13 @@
-function validateRoomData(req, res, next) {
-  const { title, body } = req.body;
-  const userId = req.user?.userId;
+// src/middleware/validateRoomData.js
+const { BadRequestError } = require("../utils/errors");
 
-  if (!title || !body || !userId) {
-    return res.status(400).json({
-      success: false,
-      message: 'Title, body and creator are required',
-    });
+function validateRoomData(req, res, next) {
+  const { title, city, startAt, endsAt } = req.body;
+
+  if (!title) throw new BadRequestError("Title is required");
+  if (!city) throw new BadRequestError("City is required");
+  if (!startAt || !endsAt) {
+    throw new BadRequestError("Start and end dates are required");
   }
 
   next();

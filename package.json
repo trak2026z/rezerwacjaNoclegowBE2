@@ -30,6 +30,7 @@
     "@controllers": "src/controllers",
     "@services": "src/services",
     "@models": "src/models",
-    "@middleware": "src/middleware"
+    "@middleware": "src/middleware",
+    "@utils": "src/utils"
   }
 }
