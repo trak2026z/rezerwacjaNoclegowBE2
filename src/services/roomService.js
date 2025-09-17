@@ -1,12 +1,15 @@
-// src/services/roomService.js
 const roomRepository = require("../repositories/roomRepository");
-const { BadRequestError, ConflictError, NotFoundError } = require("../utils/errors");
+const {
+  BadRequestError,
+  ConflictError,
+  NotFoundError,
+  ForbiddenError,
+} = require("../utils/errors");
 
 /**
  * Create a new room
  */
 async function createRoom(data, userId) {
-  // Walidacja pól (title, city, daty itp.) odbywa się w middleware validateRoomData
   const room = await roomRepository.createRoom({
     ...data,
     createdBy: userId,
@@ -102,10 +105,13 @@ async function reserveRoom(room, userId) {
     throw new NotFoundError("Room not found.");
   }
 
-  if (String(room.createdBy) === userId) {
-    throw new BadRequestError("Cannot reserve your own room.");
+  // 🛑 Zabezpieczenie na własny pokój
+  const ownerId = room.createdBy._id ? String(room.createdBy._id) : String(room.createdBy);
+  if (ownerId === String(userId)) {
+    throw new ForbiddenError("You cannot reserve your own room.");
   }
-  if (room.reserved === true) {
+
+  if (room.reserved) {
     throw new ConflictError("Room already reserved.");
   }
 

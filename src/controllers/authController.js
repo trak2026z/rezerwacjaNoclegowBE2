@@ -1,12 +1,12 @@
 // src/controllers/authController.js
 const asyncHandler = require("../utils/asyncHandler");
 const authService = require("../services/authService");
+const { NotFoundError } = require("../utils/errors");
 
 // === Kontrolery ===
 
 exports.register = asyncHandler(async (req, res) => {
-  const { email, username, password } = req.body;
-  const { user, token } = await authService.registerUser({ email, username, password });
+  const { user, token } = await authService.registerUser(req.body);
 
   return res.status(201).json({
     success: true,
@@ -16,8 +16,7 @@ exports.register = asyncHandler(async (req, res) => {
 });
 
 exports.login = asyncHandler(async (req, res) => {
-  const { username, password } = req.body;
-  const { user, token } = await authService.loginUser(username, password);
+  const { user, token } = await authService.loginUser(req.body.username, req.body.password);
 
   return res.json({
     success: true,
@@ -31,12 +30,12 @@ exports.checkEmail = asyncHandler(async (req, res) => {
   if (taken) {
     return res.status(409).json({
       success: false,
-      message: "E-mail is already taken",
+      message: "Email is already taken",
     });
   }
   return res.json({
     success: true,
-    message: "E-mail is available",
+    message: "Email is available",
   });
 });
 
@@ -56,6 +55,9 @@ exports.checkUsername = asyncHandler(async (req, res) => {
 
 exports.publicProfile = asyncHandler(async (req, res) => {
   const user = await authService.getPublicProfile(req.params.username);
+  if (!user) {
+    throw new NotFoundError("User not found");
+  }
   return res.json({
     success: true,
     data: { user },
@@ -64,6 +66,9 @@ exports.publicProfile = asyncHandler(async (req, res) => {
 
 exports.profile = asyncHandler(async (req, res) => {
   const user = await authService.getProfileById(req.user.userId);
+  if (!user) {
+    throw new NotFoundError("User not found");
+  }
   return res.json({
     success: true,
     data: { user },

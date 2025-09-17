@@ -3,18 +3,23 @@ const Room = require("../models/Room");
 const { NotFoundError, ForbiddenError } = require("../utils/errors");
 
 async function checkRoomOwner(req, res, next) {
-  const room = await Room.findById(req.params.id);
-  if (!room) {
-    throw new NotFoundError("Room not found");
-  }
+  try {
+    const room = await Room.findById(req.params.id);
 
-  if (String(room.createdBy) !== req.user.userId) {
-    throw new ForbiddenError("Not authorized to modify this room");
-  }
+    if (!room) {
+      return next(new NotFoundError("Room not found"));
+    }
 
-  // Dodajemy pokój do req, żeby kontroler mógł go używać
-  req.room = room;
-  next();
+    if (String(room.createdBy) !== req.user.userId) {
+      return next(new ForbiddenError("Not authorized to modify this room"));
+    }
+
+    // Dodajemy pokój do req, żeby kontroler mógł go używać
+    req.room = room;
+    return next();
+  } catch (err) {
+    return next(err);
+  }
 }
 
 module.exports = checkRoomOwner;

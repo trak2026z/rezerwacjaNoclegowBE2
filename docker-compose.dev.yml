@@ -25,8 +25,9 @@ services:
       - "27017:27017"
     volumes:
       - mongo-data:/data/db
+    command: ["mongod", "--quiet", "--logpath", "/dev/null", "--bind_ip_all"]
     healthcheck:
-      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
       interval: 10s
       timeout: 5s
       retries: 5

@@ -12,9 +12,9 @@ docker exec -i $CONTAINER mongosh <<EOF
 use $DB
 show collections
 
-print("=== 👤 Users (2 przykłady) ===")
-db.users.find().limit(2).pretty()
+print("=== 👤 Users (100 przykłady) ===")
+db.users.find().limit(100).pretty()
 
-print("=== 🏨 Rooms (2 przykłady) ===")
-db.rooms.find().limit(2).pretty()
+print("=== 🏨 Rooms (100 przykłady) ===")
+db.rooms.find().limit(100).pretty()
 EOF

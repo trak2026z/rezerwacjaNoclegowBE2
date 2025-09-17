@@ -1,6 +1,7 @@
 // src/controllers/roomController.js
 const asyncHandler = require("../utils/asyncHandler");
 const roomService = require("../services/roomService");
+const { ForbiddenError, NotFoundError, BadRequestError } = require("../utils/errors");
 
 // === Kontrolery ===
 
@@ -78,8 +79,21 @@ exports.dislikeRoom = asyncHandler(async (req, res) => {
   });
 });
 
-exports.reserveRoom = asyncHandler(async (req, res) => {
+exports.reserveRoom = asyncHandler(async (req, res, next) => {
   const room = await roomService.getRoomById(req.params.id);
+  if (!room) {
+    throw new NotFoundError("Room not found");
+  }
+
+  // 🚨 Nowa logika: blokada rezerwacji własnego pokoju
+  if (String(room.createdBy) === req.user.userId) {
+    throw new ForbiddenError("You cannot reserve your own room");
+  }
+
+  if (room.reserved) {
+    throw new BadRequestError("Room already reserved.");
+  }
+
   const updatedRoom = await roomService.reserveRoom(room, req.user.userId);
   return res.json({
     success: true,

@@ -19,8 +19,13 @@ server.on("error", (err) => {
   process.exit(1);
 });
 
+let isShuttingDown = false;
+
 // Graceful shutdown
 const shutdown = (signal) => {
+  if (isShuttingDown) return;
+  isShuttingDown = true;
+
   logger.warn({ signal }, `📴 Received ${signal}. Closing server...`);
 
   server.close(() => {
@@ -49,7 +54,11 @@ process.on("uncaughtException", (err) => {
   shutdown("uncaughtException");
 });
 
+// 🚑 Unhandled Rejection → logujemy, ale jeśli serwer się zamyka, ignorujemy
 process.on("unhandledRejection", (reason) => {
-  logger.fatal({ reason }, "💥 Unhandled Rejection");
-  shutdown("unhandledRejection");
+  if (isShuttingDown) {
+    logger.warn("⚠️ Unhandled Rejection after shutdown, ignoring");
+    return;
+  }
+  logger.error({ reason }, "⚠️ Unhandled Rejection (logged, not crashing)");
 });

@@ -3,13 +3,15 @@ const { AppError, UnauthorizedError } = require("../utils/errors");
 const { logger } = require("../utils/logger");
 
 function errorHandler(err, req, res, next) {
-  // Logowanie do centralnego loggera
+  const statusCode = err.statusCode || 500;
+
+  // Logowanie błędu
   logger.error(
     {
       name: err.name,
       message: err.message,
       stack: err.stack,
-      statusCode: err.statusCode || 500,
+      statusCode,
       path: req.originalUrl,
       method: req.method,
       userId: req.user?.userId,
@@ -18,20 +20,12 @@ function errorHandler(err, req, res, next) {
     `❌ Error [${err.name}]`
   );
 
-  // Jeśli odpowiedź już została wysłana, przekaż dalej
+  // Jeśli odpowiedź już poszła
   if (res.headersSent) {
     return next(err);
   }
 
-  // Obsługa błędów aplikacyjnych (AppError i pochodne)
-  if (err instanceof AppError) {
-    return res.status(err.statusCode).json({
-      success: false,
-      message: err.message,
-    });
-  }
-
-  // Obsługa błędów autoryzacji JWT
+  // 🔹 Najpierw JWT Unauthorized (ważne: przed AppError!)
   if (err instanceof UnauthorizedError) {
     return res.status(401).json({
       success: false,
@@ -39,7 +33,15 @@ function errorHandler(err, req, res, next) {
     });
   }
 
-  // Obsługa błędów walidacji Mongoose
+  // 🔹 Obsługa własnych AppError
+  if (err instanceof AppError) {
+    return res.status(statusCode).json({
+      success: false,
+      message: err.message,
+    });
+  }
+
+  // 🔹 Mongoose ValidationError
   if (err.name === "ValidationError") {
     return res.status(400).json({
       success: false,
@@ -49,7 +51,7 @@ function errorHandler(err, req, res, next) {
     });
   }
 
-  // Obsługa CastError (np. nieprawidłowe ObjectId)
+  // 🔹 CastError (np. nieprawidłowy ObjectId)
   if (err.name === "CastError") {
     return res.status(400).json({
       success: false,
@@ -57,7 +59,7 @@ function errorHandler(err, req, res, next) {
     });
   }
 
-  // Fallback – Internal Server Error
+  // 🔹 Fallback – Internal Server Error
   return res.status(500).json({
     success: false,
     message: "Internal Server Error",
