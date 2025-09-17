@@ -1,19 +1,11 @@
 // src/services/authService.js
-const jwt = require("jsonwebtoken");
 const userRepository = require("../repositories/userRepository");
-const config = require("../config");
+const tokenService = require("./tokenService");
 const {
   NotFoundError,
   ConflictError,
   UnauthorizedError,
 } = require("../utils/errors");
-
-/**
- * Generate JWT token
- */
-function generateToken(userId) {
-  return jwt.sign({ userId }, config.jwtSecret, { expiresIn: "24h" });
-}
 
 /**
  * Register new user
@@ -35,7 +27,7 @@ async function registerUser({ email, username, password }) {
     password,
   });
 
-  const token = generateToken(user._id);
+  const token = tokenService.generateToken(user._id);
 
   return {
     user: { _id: user._id, username: user.username, email: user.email },
@@ -57,7 +49,7 @@ async function loginUser(username, password) {
     throw new UnauthorizedError("Invalid password.");
   }
 
-  const token = generateToken(user._id);
+  const token = tokenService.generateToken(user._id);
 
   return {
     user: { _id: user._id, username: user.username, email: user.email },
