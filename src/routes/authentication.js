@@ -1,7 +1,7 @@
 const express = require('express');
-const auth = require('../../middleware/auth'); // ✅ ujednolicona nazwa
-const authController = require('../controllers/authController');
-const { validateRegister, validateLogin } = require('../../middleware/validateAuthData'); // ✅ dodana walidacja
+const auth = require('@middleware/auth'); // ✅ ujednolicona nazwa
+const authController = require('@controllers/authController');
+const { validateRegister, validateLogin } = require('@middleware/validateAuthData'); // ✅ dodana walidacja
 
 const router = express.Router();
 

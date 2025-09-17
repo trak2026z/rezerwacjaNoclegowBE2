@@ -5,7 +5,7 @@
   "main": "server.js",
   "scripts": {
     "dev": "nodemon src/server.js",
-    "start": "node server.js",
+    "start": "node src/server.js",
     "lint": "eslint .",
     "test": "jest --runInBand",
     "build": "echo 'No build step required for Express backend'"
@@ -16,6 +16,7 @@
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "jsonwebtoken": "^9.0.2",
+    "module-alias": "^2.2.3",
     "mongoose": "^7.6.3"
   },
   "devDependencies": {
@@ -24,5 +25,11 @@
     "nodemon": "^3.1.0"
   },
   "author": "developer",
-  "license": "ISC"
+  "license": "ISC",
+  "_moduleAliases": {
+    "@controllers": "src/controllers",
+    "@services": "src/services",
+    "@models": "src/models",
+    "@middleware": "src/middleware"
+  }
 }
