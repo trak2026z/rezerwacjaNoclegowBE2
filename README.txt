@@ -31,3 +31,4 @@ docker-compose -f docker-compose.dev.yml down -v --remove-orphans; docker system
 ./test_flowNEW4.sh 
 ./test_user_endpointsNEW2.sh
 curl http://localhost:3000/health   
+
