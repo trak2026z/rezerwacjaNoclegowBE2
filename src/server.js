@@ -1,51 +1,55 @@
 // src/server.js
-require('module-alias/register');
-const mongoose = require('mongoose');
-const app = require('./app');
-const config = require('./config');
+require("module-alias/register");
+const mongoose = require("mongoose");
+const app = require("./app");
+const config = require("./config");
+const { logger } = require("./utils/logger");
 
 // Start HTTP server
 const server = app.listen(config.port, () => {
-  console.log(`🚀 Server running in ${config.env || 'development'} mode on port ${config.port}`);
+  logger.info(
+    { env: config.env, port: config.port },
+    `🚀 Server running in ${config.env || "development"} mode on port ${config.port}`
+  );
 });
 
 // Obsługa błędów serwera (np. port zajęty)
-server.on('error', (err) => {
-  console.error('❌ Server error:', err);
+server.on("error", (err) => {
+  logger.error({ err }, "❌ Server error");
   process.exit(1);
 });
 
 // Graceful shutdown
 const shutdown = (signal) => {
-  console.log(`\n📴 Received ${signal}. Closing server...`);
+  logger.warn({ signal }, `📴 Received ${signal}. Closing server...`);
 
   server.close(() => {
-    console.log('✅ HTTP server closed.');
+    logger.info("✅ HTTP server closed.");
 
     mongoose.connection.close(false, () => {
-      console.log('✅ MongoDB connection closed.');
+      logger.info("✅ MongoDB connection closed.");
       process.exit(0);
     });
   });
 
   // Force exit jeśli coś się zawiesi
   setTimeout(() => {
-    console.error('⚠️ Forced shutdown after 10s');
+    logger.fatal("⚠️ Forced shutdown after 10s");
     process.exit(1);
   }, 10000).unref();
 };
 
 // Obsługa sygnałów systemowych
-process.on('SIGINT', () => shutdown('SIGINT'));
-process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on("SIGINT", () => shutdown("SIGINT"));
+process.on("SIGTERM", () => shutdown("SIGTERM"));
 
 // Obsługa błędów nieobsłużonych
-process.on('uncaughtException', (err) => {
-  console.error('💥 Uncaught Exception:', err);
-  shutdown('uncaughtException');
+process.on("uncaughtException", (err) => {
+  logger.fatal({ err }, "💥 Uncaught Exception");
+  shutdown("uncaughtException");
 });
 
-process.on('unhandledRejection', (reason) => {
-  console.error('💥 Unhandled Rejection:', reason);
-  shutdown('unhandledRejection');
+process.on("unhandledRejection", (reason) => {
+  logger.fatal({ reason }, "💥 Unhandled Rejection");
+  shutdown("unhandledRejection");
 });

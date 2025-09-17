@@ -11,8 +11,7 @@ exports.register = asyncHandler(async (req, res) => {
   return res.status(201).json({
     success: true,
     message: "Account registered!",
-    token,
-    user,
+    data: { user, token },
   });
 });
 
@@ -23,33 +22,50 @@ exports.login = asyncHandler(async (req, res) => {
   return res.json({
     success: true,
     message: "Login successful!",
-    token,
-    user,
+    data: { user, token },
   });
 });
 
 exports.checkEmail = asyncHandler(async (req, res) => {
   const taken = await authService.isEmailTaken(req.params.email);
   if (taken) {
-    return res.status(409).json({ success: false, message: "E-mail is already taken" });
+    return res.status(409).json({
+      success: false,
+      message: "E-mail is already taken",
+    });
   }
-  return res.json({ success: true, message: "E-mail is available" });
+  return res.json({
+    success: true,
+    message: "E-mail is available",
+  });
 });
 
 exports.checkUsername = asyncHandler(async (req, res) => {
   const taken = await authService.isUsernameTaken(req.params.username);
   if (taken) {
-    return res.status(409).json({ success: false, message: "Username is already taken" });
+    return res.status(409).json({
+      success: false,
+      message: "Username is already taken",
+    });
   }
-  return res.json({ success: true, message: "Username is available" });
+  return res.json({
+    success: true,
+    message: "Username is available",
+  });
 });
 
 exports.publicProfile = asyncHandler(async (req, res) => {
   const user = await authService.getPublicProfile(req.params.username);
-  return res.json({ success: true, user });
+  return res.json({
+    success: true,
+    data: { user },
+  });
 });
 
 exports.profile = asyncHandler(async (req, res) => {
   const user = await authService.getProfileById(req.user.userId);
-  return res.json({ success: true, user });
+  return res.json({
+    success: true,
+    data: { user },
+  });
 });

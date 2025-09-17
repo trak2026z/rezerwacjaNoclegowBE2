@@ -1,7 +1,6 @@
 // src/middleware/auth.js
-const jwt = require("jsonwebtoken");
-const config = require("../config");
 const { UnauthorizedError } = require("../utils/errors");
+const tokenService = require("../services/tokenService");
 
 function authMiddleware(req, res, next) {
   const authHeader = req.headers["authorization"];
@@ -16,14 +15,10 @@ function authMiddleware(req, res, next) {
   }
 
   const token = parts[1];
+  const decoded = tokenService.verifyToken(token);
 
-  try {
-    const decoded = jwt.verify(token, config.jwtSecret);
-    req.user = decoded; // zamiast req.decoded
-    next();
-  } catch (err) {
-    throw new UnauthorizedError("Invalid or expired token");
-  }
+  req.user = decoded; // np. { userId, iat, exp }
+  next();
 }
 
 module.exports = authMiddleware;

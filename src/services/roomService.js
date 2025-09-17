@@ -6,12 +6,7 @@ const { BadRequestError, ConflictError, NotFoundError } = require("../utils/erro
  * Create a new room
  */
 async function createRoom(data, userId) {
-  const { title, city } = data;
-
-  if (!title || !city) {
-    throw new BadRequestError("Title and city are required.");
-  }
-
+  // Walidacja pól (title, city, daty itp.) odbywa się w middleware validateRoomData
   const room = await roomRepository.createRoom({
     ...data,
     createdBy: userId,
@@ -92,6 +87,8 @@ async function handleReaction(room, userId, type) {
       room.likedBy = room.likedBy.filter((u) => String(u) !== userId);
       if (room.likes > 0) room.likes--;
     }
+  } else {
+    throw new BadRequestError("Invalid reaction type. Use 'like' or 'dislike'.");
   }
 
   return roomRepository.save(room);
@@ -108,12 +105,12 @@ async function reserveRoom(room, userId) {
   if (String(room.createdBy) === userId) {
     throw new BadRequestError("Cannot reserve your own room.");
   }
-  if (room.reserve === true) {
+  if (room.reserved === true) {
     throw new ConflictError("Room already reserved.");
   }
 
   room.reservedBy = userId;
-  room.reserve = true;
+  room.reserved = true;
 
   return roomRepository.save(room);
 }
