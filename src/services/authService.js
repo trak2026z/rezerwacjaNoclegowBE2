@@ -1,3 +1,7 @@
+/**
+ * Serwis obsługujący operacje uwierzytelniania i zarządzania użytkownikami
+ * @module services/authService
+ */
 // src/services/authService.js
 const userRepository = require("../repositories/userRepository");
 const tokenService = require("./tokenService");
@@ -8,7 +12,13 @@ const {
 } = require("../utils/errors");
 
 /**
- * Register new user
+ * Rejestruje nowego użytkownika w systemie
+ * @param {Object} userData - Dane nowego użytkownika
+ * @param {string} userData.email - Adres email użytkownika
+ * @param {string} userData.username - Nazwa użytkownika
+ * @param {string} userData.password - Hasło użytkownika
+ * @returns {Promise<Object>} - Obiekt zawierający dane użytkownika i token
+ * @throws {ConflictError} - Gdy email lub nazwa użytkownika są już zajęte
  */
 async function registerUser({ email, username, password }) {
   const emailTaken = await userRepository.findByEmail(email);
@@ -36,7 +46,12 @@ async function registerUser({ email, username, password }) {
 }
 
 /**
- * Login user
+ * Loguje użytkownika do systemu
+ * @param {string} username - Nazwa użytkownika
+ * @param {string} password - Hasło użytkownika
+ * @returns {Promise<Object>} - Obiekt zawierający dane użytkownika i token
+ * @throws {NotFoundError} - Gdy użytkownik nie istnieje
+ * @throws {UnauthorizedError} - Gdy hasło jest nieprawidłowe
  */
 async function loginUser(username, password) {
   const user = await userRepository.findByUsername(username);
@@ -58,21 +73,28 @@ async function loginUser(username, password) {
 }
 
 /**
- * Check if email exists
+ * Sprawdza czy adres email jest już zajęty
+ * @param {string} email - Adres email do sprawdzenia
+ * @returns {Promise<boolean>} - True jeśli email jest zajęty, false w przeciwnym razie
  */
 async function isEmailTaken(email) {
   return !!(await userRepository.findByEmail(email));
 }
 
 /**
- * Check if username exists
+ * Sprawdza czy nazwa użytkownika jest już zajęta
+ * @param {string} username - Nazwa użytkownika do sprawdzenia
+ * @returns {Promise<boolean>} - True jeśli nazwa jest zajęta, false w przeciwnym razie
  */
 async function isUsernameTaken(username) {
   return !!(await userRepository.findByUsername(username));
 }
 
 /**
- * Get public profile by username
+ * Pobiera publiczny profil użytkownika na podstawie nazwy użytkownika
+ * @param {string} username - Nazwa użytkownika
+ * @returns {Promise<Object>} - Publiczne dane użytkownika
+ * @throws {NotFoundError} - Gdy użytkownik nie istnieje
  */
 async function getPublicProfile(username) {
   const user = await userRepository.findByUsername(username);
@@ -83,7 +105,10 @@ async function getPublicProfile(username) {
 }
 
 /**
- * Get profile by ID
+ * Pobiera profil użytkownika na podstawie ID
+ * @param {string} userId - ID użytkownika
+ * @returns {Promise<Object>} - Dane profilu użytkownika
+ * @throws {NotFoundError} - Gdy użytkownik nie istnieje
  */
 async function getProfileById(userId) {
   const user = await userRepository.findById(userId);

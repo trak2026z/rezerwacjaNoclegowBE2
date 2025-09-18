@@ -1,24 +1,34 @@
 # syntax=docker/dockerfile:1.7
+# Dockerfile.dev - Konfiguracja środowiska deweloperskiego
+
+# Obraz bazowy - Node.js w wersji 20 na Alpine Linux (lekka dystrybucja)
 FROM node:20-alpine
 
+# Ustawienie katalogu roboczego aplikacji
 WORKDIR /app
 
+# Zmienne środowiskowe dla trybu deweloperskiego
 ENV NODE_ENV=development \
     NODE_OPTIONS=--enable-source-maps
 
-# Kopiujemy manifesty zależności
+# Optymalizacja warstw Docker - najpierw kopiujemy pliki zależności
+# Pozwala to na wykorzystanie cache przy kolejnych budowaniach obrazu
 COPY package*.json ./
 
-# Instalacja zależności (w tym devDependencies)
+# Instalacja wszystkich zależności, włącznie z deweloperskimi
+# Używamy czystego 'npm install' zamiast 'npm ci' dla elastyczności w trybie dev
 RUN npm install
 
-# Kopiujemy kod aplikacji
+# Kopiowanie kodu źródłowego aplikacji
+# W środowisku deweloperskim ten kod będzie nadpisany przez wolumen
 COPY . .
 
-# Uruchamiamy na porcie 3000 (zgodnym z .env)
+# Informacja o porcie, na którym działa aplikacja (zgodny z konfiguracją w .env)
 EXPOSE 3000
 
-# Użyj użytkownika node (bez root)
+# Zmiana użytkownika na niepriwilegowanego dla zwiększenia bezpieczeństwa
+# Dobra praktyka: nie uruchamiamy aplikacji jako root
 USER node
 
+# Uruchomienie aplikacji w trybie deweloperskim z hot-reloadingiem
 CMD ["npm", "run", "dev"]

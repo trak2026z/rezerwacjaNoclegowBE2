@@ -1,36 +1,45 @@
+# docker-compose.dev.yml
+# Konfiguracja środowiska deweloperskiego dla aplikacji rezerwacji noclegów
+
 services:
+  # Serwis API aplikacji
   api:
     build:
       context: .
       dockerfile: Dockerfile.dev
     container_name: rezerwacja_api_dev
     ports:
-      - "3000:3000"
+      - "3000:3000"  # Mapowanie portu hosta do kontenera
     environment:
       - NODE_ENV=development
-      - MONGO_URI=mongodb://db:27017/rezerwacje   # ✅ dopasowane do .env (nazwa DB = rezerwacje)
-      - JWT_SECRET=super_secret_jwt_key           # ✅ jawnie podajemy, jak w .env
-      - PORT=3000                                 # ✅ spójne z .env
+      - MONGO_URI=mongodb://db:27017/rezerwacje   # Połączenie z bazą danych MongoDB
+      - JWT_SECRET=super_secret_jwt_key           # Klucz do podpisywania tokenów JWT
+      - PORT=3000                                 # Port na którym działa aplikacja
     volumes:
-      - .:/app
-      - /app/node_modules   # chroni node_modules w kontenerze
+      - .:/app                                    # Montowanie kodu źródłowego
+      - /app/node_modules                         # Ochrona node_modules w kontenerze
     depends_on:
       db:
-        condition: service_healthy
+        condition: service_healthy               # Uruchomienie po poprawnym starcie bazy danych
+    restart: unless-stopped                      # Automatyczny restart w przypadku awarii
 
+  # Baza danych MongoDB
   db:
-    image: mongo:7
+    image: mongo:7                               # Oficjalny obraz MongoDB w wersji 7
     container_name: rezerwacja_db_dev
     ports:
-      - "27017:27017"
+      - "27017:27017"                            # Mapowanie portu MongoDB
     volumes:
-      - mongo-data:/data/db
+      - mongo-data:/data/db                      # Trwałe przechowywanie danych
     command: ["mongod", "--quiet", "--logpath", "/dev/null", "--bind_ip_all"]
-    healthcheck:
+    healthcheck:                                 # Sprawdzanie stanu bazy danych
       test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
       interval: 10s
       timeout: 5s
       retries: 5
+    restart: unless-stopped                      # Automatyczny restart w przypadku awarii
 
+# Definicja wolumenów dla trwałego przechowywania danych
 volumes:
   mongo-data:
+    name: rezerwacja_mongo_data_dev              # Nazwany wolumen dla łatwiejszej identyfikacji

@@ -1,3 +1,7 @@
+/**
+ * Serwis obsługujący operacje związane z pokojami
+ * @module services/roomService
+ */
 const roomRepository = require("../repositories/roomRepository");
 const {
   BadRequestError,
@@ -7,7 +11,10 @@ const {
 } = require("../utils/errors");
 
 /**
- * Create a new room
+ * Tworzy nowy pokój w systemie
+ * @param {Object} data - Dane pokoju do utworzenia
+ * @param {string} userId - ID użytkownika tworzącego pokój
+ * @returns {Promise<Object>} - Utworzony pokój
  */
 async function createRoom(data, userId) {
   const room = await roomRepository.createRoom({
@@ -20,14 +27,18 @@ async function createRoom(data, userId) {
 }
 
 /**
- * Get all rooms (with user info populated)
+ * Pobiera wszystkie pokoje z systemu
+ * @returns {Promise<Array>} - Lista wszystkich pokoi z uzupełnionymi danymi użytkowników
  */
 async function getAllRooms() {
   return roomRepository.findAllRooms();
 }
 
 /**
- * Get a room by ID
+ * Pobiera pokój na podstawie ID
+ * @param {string} id - ID pokoju do pobrania
+ * @returns {Promise<Object>} - Znaleziony pokój
+ * @throws {NotFoundError} - Gdy pokój nie istnieje
  */
 async function getRoomById(id) {
   const room = await roomRepository.findRoomById(id);
@@ -38,7 +49,11 @@ async function getRoomById(id) {
 }
 
 /**
- * Update room with new data
+ * Aktualizuje dane pokoju
+ * @param {Object} room - Obiekt pokoju do aktualizacji
+ * @param {Object} data - Nowe dane pokoju
+ * @returns {Promise<Object>} - Zaktualizowany pokój
+ * @throws {NotFoundError} - Gdy pokój nie istnieje
  */
 async function updateRoom(room, data) {
   if (!room) {
@@ -48,7 +63,10 @@ async function updateRoom(room, data) {
 }
 
 /**
- * Delete room
+ * Usuwa pokój z systemu
+ * @param {Object} room - Obiekt pokoju do usunięcia
+ * @returns {Promise<Object>} - Wynik operacji usunięcia
+ * @throws {NotFoundError} - Gdy pokój nie istnieje
  */
 async function deleteRoom(room) {
   if (!room) {
@@ -58,7 +76,13 @@ async function deleteRoom(room) {
 }
 
 /**
- * Handle like/dislike logic
+ * Obsługuje reakcje użytkownika (polubienie/niepolubienie) na pokój
+ * @param {Object} room - Obiekt pokoju
+ * @param {string} userId - ID użytkownika wykonującego reakcję
+ * @param {string} type - Typ reakcji ('like' lub 'dislike')
+ * @returns {Promise<Object>} - Zaktualizowany pokój
+ * @throws {NotFoundError} - Gdy pokój nie istnieje
+ * @throws {BadRequestError} - Gdy użytkownik już wykonał daną reakcję lub typ reakcji jest nieprawidłowy
  */
 async function handleReaction(room, userId, type) {
   if (!room) {
@@ -98,14 +122,20 @@ async function handleReaction(room, userId, type) {
 }
 
 /**
- * Reserve room
+ * Rezerwuje pokój dla użytkownika
+ * @param {Object} room - Obiekt pokoju do zarezerwowania
+ * @param {string} userId - ID użytkownika dokonującego rezerwacji
+ * @returns {Promise<Object>} - Zaktualizowany pokój z rezerwacją
+ * @throws {NotFoundError} - Gdy pokój nie istnieje
+ * @throws {ForbiddenError} - Gdy użytkownik próbuje zarezerwować własny pokój
+ * @throws {ConflictError} - Gdy pokój jest już zarezerwowany
  */
 async function reserveRoom(room, userId) {
   if (!room) {
     throw new NotFoundError("Room not found.");
   }
 
-  // 🛑 Zabezpieczenie na własny pokój
+  // Zabezpieczenie na własny pokój
   const ownerId = room.createdBy._id ? String(room.createdBy._id) : String(room.createdBy);
   if (ownerId === String(userId)) {
     throw new ForbiddenError("You cannot reserve your own room.");

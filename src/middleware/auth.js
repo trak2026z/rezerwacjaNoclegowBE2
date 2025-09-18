@@ -1,33 +1,65 @@
-// src/middleware/auth.js
+/**
+ * Authentication Middleware
+ * Validates JWT tokens from request headers and attaches user data to the request
+ */
 const { UnauthorizedError } = require("../utils/errors");
 const tokenService = require("../services/tokenService");
 
+/**
+ * Constants for authentication
+ */
+const AUTH_CONSTANTS = {
+  SCHEME: 'Bearer',
+  ERROR_MESSAGES: {
+    MISSING_HEADER: 'Authorization header missing',
+    INVALID_FORMAT: 'Invalid authorization format',
+    INVALID_TOKEN: 'Invalid or expired token'
+  }
+};
+
+/**
+ * Authentication middleware
+ * Verifies JWT token from Authorization header and attaches user data to request
+ * 
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ * @param {Function} next - Express next middleware function
+ * @returns {void}
+ */
 function authMiddleware(req, res, next) {
   try {
+    // Get authorization header
     const authHeader = req.headers["authorization"];
+    
+    // Check if header exists
     if (!authHeader) {
-      return next(new UnauthorizedError("Authorization header missing"));
+      return next(new UnauthorizedError(AUTH_CONSTANTS.ERROR_MESSAGES.MISSING_HEADER));
     }
 
-    // Expect "Bearer <token>"
+    // Validate header format (Bearer <token>)
     const parts = authHeader.split(" ");
-    if (parts.length !== 2 || parts[0] !== "Bearer") {
-      return next(new UnauthorizedError("Invalid authorization format"));
+    if (parts.length !== 2 || parts[0] !== AUTH_CONSTANTS.SCHEME) {
+      return next(new UnauthorizedError(AUTH_CONSTANTS.ERROR_MESSAGES.INVALID_FORMAT));
     }
 
+    // Extract token
     const token = parts[1];
 
-    let decoded;
+    // Verify token
     try {
-      decoded = tokenService.verifyToken(token);
-    } catch (err) {
-      return next(new UnauthorizedError("Invalid or expired token"));
+      const decoded = tokenService.verifyToken(token);
+      
+      // Attach user data to request
+      req.user = decoded; // Contains { userId, iat, exp }
+      
+      return next();
+    } catch (tokenError) {
+      // Handle token verification errors
+      return next(new UnauthorizedError(AUTH_CONSTANTS.ERROR_MESSAGES.INVALID_TOKEN));
     }
-
-    req.user = decoded; // np. { userId, iat, exp }
-    return next();
-  } catch (err) {
-    return next(err);
+  } catch (error) {
+    // Pass any errors to the error handler
+    return next(error);
   }
 }
 

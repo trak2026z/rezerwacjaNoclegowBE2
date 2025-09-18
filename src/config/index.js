@@ -1,44 +1,105 @@
+/**
+ * Configuration module for the application
+ * Loads environment variables and provides configuration values
+ */
 const dotenv = require('dotenv');
+const { logger } = require('../utils/logger');
 
-// Load .env file into process.env
-dotenv.config();
-
-const config = {
-  env: process.env.NODE_ENV || 'development',
-  port: process.env.PORT || 5000,
-
-  // ⚠️ fallback tylko w development
-  jwtSecret:
-    process.env.JWT_SECRET ||
-    (process.env.NODE_ENV !== 'production' ? 'fallback_secret' : undefined),
-
-  // ⚠️ fallback tylko w development
-  mongoUri:
-    process.env.MONGO_URI ||
-    (process.env.NODE_ENV !== 'production'
-      ? 'mongodb://localhost:27017/rezerwacje'
-      : undefined),
-
-  corsOrigin: process.env.CORS_ORIGIN || '*',
+// Constants
+const ENVIRONMENTS = {
+  DEVELOPMENT: 'development',
+  PRODUCTION: 'production',
+  TEST: 'test'
 };
 
-// 🔒 W produkcji wymagamy podania krytycznych zmiennych
-if (config.env === 'production') {
-  if (!config.jwtSecret) {
-    throw new Error('❌ Missing required environment variable: JWT_SECRET');
+const DEFAULT_PORT = 5000;
+const DEFAULT_MONGO_URI = 'mongodb://localhost:27017/rezerwacje';
+const DEFAULT_JWT_SECRET = 'fallback_secret';
+const DEFAULT_CORS_ORIGIN = '*';
+
+/**
+ * Load environment variables from .env file
+ */
+function loadEnvironmentVariables() {
+  dotenv.config();
+}
+
+/**
+ * Get current environment
+ * @returns {string} Current environment (development, production, test)
+ */
+function getEnvironment() {
+  return process.env.NODE_ENV || ENVIRONMENTS.DEVELOPMENT;
+}
+
+/**
+ * Create configuration object based on environment variables
+ * @param {string} environment - Current environment
+ * @returns {Object} Configuration object
+ */
+function createConfig(environment) {
+  const isDevelopment = environment === ENVIRONMENTS.DEVELOPMENT;
+  const isProduction = environment === ENVIRONMENTS.PRODUCTION;
+  
+  return {
+    env: environment,
+    port: parseInt(process.env.PORT || DEFAULT_PORT, 10),
+    
+    // JWT secret - fallback only in development
+    jwtSecret: process.env.JWT_SECRET || (isDevelopment ? DEFAULT_JWT_SECRET : undefined),
+    
+    // MongoDB URI - fallback only in development
+    mongoUri: process.env.MONGO_URI || (isDevelopment ? DEFAULT_MONGO_URI : undefined),
+    
+    // CORS origin
+    corsOrigin: process.env.CORS_ORIGIN || DEFAULT_CORS_ORIGIN,
+  };
+}
+
+/**
+ * Validate configuration for production environment
+ * @param {Object} config - Configuration object
+ * @throws {Error} If required environment variables are missing in production
+ */
+function validateProductionConfig(config) {
+  if (config.env !== ENVIRONMENTS.PRODUCTION) {
+    return;
   }
-  if (!config.mongoUri) {
-    throw new Error('❌ Missing required environment variable: MONGO_URI');
+  
+  const requiredVars = [
+    { key: 'jwtSecret', name: 'JWT_SECRET' },
+    { key: 'mongoUri', name: 'MONGO_URI' }
+  ];
+  
+  for (const { key, name } of requiredVars) {
+    if (!config[key]) {
+      throw new Error(`❌ Missing required environment variable: ${name}`);
+    }
   }
 }
 
-// 🐛 W development logujemy konfigurację (bez sekretnych danych)
-if (config.env === 'development') {
-  console.log('✅ Loaded configuration:', {
+/**
+ * Log configuration in development environment
+ * @param {Object} config - Configuration object
+ */
+function logDevelopmentConfig(config) {
+  if (config.env !== ENVIRONMENTS.DEVELOPMENT) {
+    return;
+  }
+  
+  // Log non-sensitive configuration values
+  logger.info({
     port: config.port,
     mongoUri: config.mongoUri,
-    corsOrigin: config.corsOrigin,
-  });
+    corsOrigin: config.corsOrigin
+  }, '✅ Loaded configuration');
 }
+
+// Initialize configuration
+loadEnvironmentVariables();
+const environment = getEnvironment();
+const config = createConfig(environment);
+validateProductionConfig(config);
+logDevelopmentConfig(config);
 
 module.exports = config;

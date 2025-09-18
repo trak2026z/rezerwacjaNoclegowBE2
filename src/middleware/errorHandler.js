@@ -1,11 +1,33 @@
-// src/middleware/errorHandler.js
+/**
+ * Middleware obsługi błędów
+ * Przechwytuje i przetwarza błędy aplikacji, zwracając odpowiednie odpowiedzi HTTP
+ */
 const { AppError, UnauthorizedError } = require("../utils/errors");
 const { logger } = require("../utils/logger");
 
-function errorHandler(err, req, res, next) {
-  const statusCode = err.statusCode || 500;
+/**
+ * Stałe dla typów błędów i komunikatów
+ */
+const ERROR_TYPES = {
+  VALIDATION_ERROR: "ValidationError",
+  CAST_ERROR: "CastError"
+};
 
-  // Logowanie błędu
+const ERROR_MESSAGES = {
+  UNAUTHORIZED: "Unauthorized",
+  INVALID_ID: "Invalid ID format.",
+  INTERNAL_SERVER: "Internal Server Error"
+};
+
+/**
+ * Loguje szczegóły błędu
+ * 
+ * @param {Error} err - Obiekt błędu
+ * @param {Object} req - Obiekt żądania Express
+ */
+function logError(err, req) {
+  const statusCode = err.statusCode || 500;
+  
   logger.error(
     {
       name: err.name,
@@ -19,8 +41,24 @@ function errorHandler(err, req, res, next) {
     },
     `❌ Error [${err.name}]`
   );
+}
 
-  // Jeśli odpowiedź już poszła
+/**
+ * Middleware obsługi błędów
+ * 
+ * @param {Error} err - Obiekt błędu
+ * @param {Object} req - Obiekt żądania Express
+ * @param {Object} res - Obiekt odpowiedzi Express
+ * @param {Function} next - Funkcja przekazująca sterowanie do następnego middleware
+ * @returns {Object} Odpowiedź HTTP z informacją o błędzie
+ */
+function errorHandler(err, req, res, next) {
+  const statusCode = err.statusCode || 500;
+
+  // Logowanie błędu
+  logError(err, req);
+
+  // Jeśli odpowiedź już została wysłana
   if (res.headersSent) {
     return next(err);
   }
@@ -29,7 +67,7 @@ function errorHandler(err, req, res, next) {
   if (err instanceof UnauthorizedError) {
     return res.status(401).json({
       success: false,
-      message: err.message || "Unauthorized",
+      message: err.message || ERROR_MESSAGES.UNAUTHORIZED,
     });
   }
 
@@ -42,7 +80,7 @@ function errorHandler(err, req, res, next) {
   }
 
   // 🔹 Mongoose ValidationError
-  if (err.name === "ValidationError") {
+  if (err.name === ERROR_TYPES.VALIDATION_ERROR) {
     return res.status(400).json({
       success: false,
       message: Object.values(err.errors)
@@ -52,17 +90,17 @@ function errorHandler(err, req, res, next) {
   }
 
   // 🔹 CastError (np. nieprawidłowy ObjectId)
-  if (err.name === "CastError") {
+  if (err.name === ERROR_TYPES.CAST_ERROR) {
     return res.status(400).json({
       success: false,
-      message: "Invalid ID format.",
+      message: ERROR_MESSAGES.INVALID_ID,
     });
   }
 
   // 🔹 Fallback – Internal Server Error
   return res.status(500).json({
     success: false,
-    message: "Internal Server Error",
+    message: ERROR_MESSAGES.INTERNAL_SERVER,
   });
 }
 
